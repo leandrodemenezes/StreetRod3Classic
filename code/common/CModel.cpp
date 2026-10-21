@@ -263,7 +263,7 @@ bool CModel::loadnew3DData(FILE *fp)
             for( int j=0; j<p->nNumChannels; j++ )
                 fread( p->psChannels[j].nTexCoord,   sizeof(uint),   3,  fp );
 
-			for( j=0; j<3; j++ ) {
+			for( int j=0; j<3; j++ ) {
 				fread( &p->nVertexNormal[j],    sizeof(uint),   1,  fp );
                 fread( &p->nVertex[j],          sizeof(uint),   1,  fp );
             }

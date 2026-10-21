@@ -90,36 +90,43 @@ void CRadio::freePlaylist(void)
 }
 
 
+
 ///////////////////
 // Load the playlist
 void CRadio::loadSongs(void)
 {
+    writeLog("[RADIO] loadSongs() called\n");
+
     // Free the old playlist
     freePlaylist();
 
     // Get the first file
     char filename[256];
-    if( !FindFirst("music", "*.mp3", filename) )
+
+    writeLog("[RADIO] Searching for MP3 files in folder: music\n");
+
+    if(!FindFirst("music", "*.mp3", filename)) {
+        writeLog("[RADIO] WARNING: No MP3 files found in music folder\n");
         return;
+    }
 
-    writeLog("Radio: Loading files:\n");
-    
+    writeLog("[RADIO] MP3 search succeeded. First file: %s\n", filename);
+
     while(1) {
-
         addSong(filename);
-        writeLog(" Adding %s\n",filename);
+        writeLog("[RADIO] Added song: %s\n", filename);
 
-        if( !FindNext(filename) )
+        if(!FindNext(filename))
             break;
     }
 
-	// TODO: Create a shuffle array
-
     // Play the first song
-    if( m_psMP3Playlist )
+    if(m_psMP3Playlist) {
+        writeLog("[RADIO] Playlist loaded. Starting first song.\n");
         playSong(m_psMP3Playlist);
-
-    return;
+    } else {
+        writeLog("[RADIO] WARNING: Playlist is empty after scanning\n");
+    }
 }
 
 
@@ -128,33 +135,73 @@ void CRadio::loadSongs(void)
 void CRadio::playSong(mp3list_t *psMP3)
 {
     m_psMP3CurSong = psMP3;
-    if( !psMP3 )
+
+    if(!psMP3) {
+        writeLog("[RADIO] No song selected (psMP3 is NULL)\n");
         return;
+    }
 
     // Stop & free the current song
-    if( m_mp3Stream ) {
-        BASS_ChannelStop( m_mp3Stream );
-        BASS_StreamFree( m_mp3Stream );
+    if(m_mp3Stream) {
+        writeLog("[RADIO] Stopping previous stream: handle=%lu\n",
+                 (unsigned long)m_mp3Stream);
+
+        BASS_ChannelStop(m_mp3Stream);
+        BASS_StreamFree(m_mp3Stream);
+        m_mp3Stream = 0;
     }
 
-    m_mp3Stream = BASS_StreamCreateFile(false, psMP3->szFilename, 0, 0, 0);    
+    writeLog("[RADIO] Opening stream: \"%s\"\n", psMP3->szFilename);
+
+    m_mp3Stream = BASS_StreamCreateFile(false, psMP3->szFilename, 0, 0, 0);
+
     if(m_mp3Stream != 0) {
-        BASS_ChannelSetAttributes(m_mp3Stream, -1, m_MusicVolume, -101);
-        BASS_StreamPlay( m_mp3Stream, true, 0 );
-        m_bStopped = false;
-    }
+        writeLog("[RADIO] Stream created: handle=%lu\n",
+                 (unsigned long)m_mp3Stream);
 
-    // Show the error
-    if(m_mp3Stream == 0) {
-        writeLog("Radio: Could not play \"%s\"\n Reason: ",psMP3->szFilename);
+        if(!BASS_ChannelSetAttributes(m_mp3Stream, -1, m_MusicVolume, -101)) {
+            writeLog("[RADIO] ERROR: ChannelSetAttributes failed, BASS error=%d\n",
+                     BASS_ErrorGetCode());
+        } else {
+            writeLog("[RADIO] Volume configured: %d\n", m_MusicVolume);
+        }
+
+        if(!BASS_StreamPlay(m_mp3Stream, true, 0)) {
+            writeLog("[RADIO] ERROR: StreamPlay failed, BASS error=%d\n",
+                     BASS_ErrorGetCode());
+        } else {
+            writeLog("[RADIO] StreamPlay succeeded\n");
+            m_bStopped = false;
+        }
+    } else {
+        writeLog("[RADIO] ERROR: StreamCreateFile failed, BASS error=%d\n",
+                 BASS_ErrorGetCode());
+
+        // Original error details
+        writeLog("Radio: Could not play \"%s\"\n Reason: ", psMP3->szFilename);
+
         switch(BASS_ErrorGetCode()) {
-            case BASS_ERROR_FILEOPEN:   writeLog("The file could not be opened\n");  break;
-            case BASS_ERROR_FORMAT:     writeLog("The file's format is not recognised/supported\n");  break;
-            case BASS_ERROR_MEM:        writeLog("There is insufficent memory\n");  break;
-            case BASS_ERROR_NO3D:       writeLog("Couldn't initialize 3D support for the stream\n");  break;
-            case BASS_ERROR_UNKNOWN:    writeLog("Some mystery problem\n");  break;            
-            case BASS_ERROR_INIT:       writeLog("Sound is disabled\n");    break;
-            default:                    writeLog("Unknown\n");  break;
+            case BASS_ERROR_FILEOPEN:
+                writeLog("The file could not be opened\n");
+                break;
+            case BASS_ERROR_FORMAT:
+                writeLog("The file's format is not recognised/supported\n");
+                break;
+            case BASS_ERROR_MEM:
+                writeLog("There is insufficient memory\n");
+                break;
+            case BASS_ERROR_NO3D:
+                writeLog("Couldn't initialize 3D support for the stream\n");
+                break;
+            case BASS_ERROR_UNKNOWN:
+                writeLog("Some mystery problem\n");
+                break;
+            case BASS_ERROR_INIT:
+                writeLog("Sound is disabled\n");
+                break;
+            default:
+                writeLog("Unknown\n");
+                break;
         }
     }
 }

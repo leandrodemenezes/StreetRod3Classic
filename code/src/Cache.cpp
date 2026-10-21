@@ -208,37 +208,49 @@ CModel *Cache_LoadModel(char *sFilename)
 }
 
 
+
 ///////////////////
 // Load a sample
 HSAMPLE Cache_LoadSample(char *sFilename, int max)
 {
-	cache_t *cache = Cache_FindMatch(sFilename);
+        cache_t *cache = Cache_FindMatch(sFilename);
 
-	// No match
-	if(cache == NULL) {
-		cache = Cache_FindUnused();
+        // No match
+        if(cache == NULL) {
+                cache = Cache_FindUnused();
 
-		// No unused
-		if(cache == NULL)
-			return NULL;
+                // No unused cache entry
+                if(cache == NULL) {
+                        writeLog("[AUDIO] ERROR: No free cache entry for sample \"%s\"\n",
+                                 sFilename);
+                        return 0;
+                }
 
-	} else
-		return cache->smpSample;
+        } else {
+                writeLog("[AUDIO] Sample already cached: \"%s\", handle=%lu\n",
+                         sFilename, (unsigned long)cache->smpSample);
+                return cache->smpSample;
+        }
 
-	
-	// Load the sample
-	cache->smpSample = BASS_SampleLoad(false,sFilename,0,0,max,0);
-	if(cache->smpSample < 0)
-	{
-		// 17/06/05
-		writeLog("File \"%s\" could not be loaded as a sample",sFilename);
-		//
-		return -1;
-	}
+        // Load the sample
+        writeLog("[AUDIO] Loading sample: \"%s\", max=%d\n",
+                 sFilename, max);
 
-	cache->iType = CCH_SAMPLE;
-	cache->iUsed = true;
-	strcpy(cache->sFilename,sFilename);
+        cache->smpSample = BASS_SampleLoad(false, sFilename, 0, 0, max, 0);
 
-	return cache->smpSample;
+        // BASS returns 0 when sample loading fails
+        if(cache->smpSample == 0) {
+                writeLog("[AUDIO] ERROR: Failed to load sample \"%s\", BASS error=%d\n",
+                         sFilename, BASS_ErrorGetCode());
+                return 0;
+        }
+
+        cache->iType = CCH_SAMPLE;
+        cache->iUsed = true;
+        strcpy(cache->sFilename, sFilename);
+
+        writeLog("[AUDIO] Sample loaded: \"%s\", handle=%lu\n",
+                 sFilename, (unsigned long)cache->smpSample);
+
+        return cache->smpSample;
 }

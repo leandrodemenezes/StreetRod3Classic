@@ -772,7 +772,8 @@ void Car_CheckCarCollisions(CCar *pcCar1, CCar *pcCar2)
         return;
 
     // Clear it
-    for(int i=0;i<16;i++) {
+	int i;
+    for(i=0;i<16;i++) {
 		m1[i] = 0;
         m2[i] = 0;
     }

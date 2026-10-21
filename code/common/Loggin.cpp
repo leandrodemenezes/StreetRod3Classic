@@ -1,3 +1,4 @@
+
 /////////////////////////////////////////
 //
 //             Street Rod 3
@@ -24,48 +25,61 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-
-// Logging system
-// Created 7/5/02
-// Jason Boettcher
-
+/////////////////////////////////////////
+// Street Rod 3 - Logging system
+// Based on the original logger, 2002-2004
+/////////////////////////////////////////
 
 #include "defs.h"
 
 FILE *fpLog = NULL;
 
-///////////////////
-// Write a log to a file
+// Write a timestamped log message.
 void writeLog(char *fmt, ...)
 {
-	va_list arg;
+    va_list arg;
+    time_t now;
+    struct tm *localTime;
 
-	// If the file isn't open, open it
-	if(!fpLog) {
-		fpLog = fopen("logfile.txt","wt");
-		if(fpLog == NULL)
-			return;
+    // Open the log on the first message.
+    if(!fpLog) {
+        fpLog = fopen("logfile.txt", "wt");
+        if(fpLog == NULL)
+            return;
 
-		fprintf(fpLog,"Street Rod 3 Log file:\n"
-					  "----------------------\n\n");
-	}
+        fprintf(fpLog,
+                "Street Rod 3 Log file\n"
+                "---------------------\n\n");
+    }
 
-	if(fpLog == NULL)
-		return;
+    now = time(NULL);
+    localTime = localtime(&now);
 
-	va_start(arg, fmt);
-	vfprintf(fpLog, fmt, arg);
-	va_end(arg);
+    if(localTime != NULL) {
+        fprintf(fpLog,
+                "[%04d-%02d-%02d %02d:%02d:%02d] ",
+                localTime->tm_year + 1900,
+                localTime->tm_mon + 1,
+                localTime->tm_mday,
+                localTime->tm_hour,
+                localTime->tm_min,
+                localTime->tm_sec);
+    } else {
+        fprintf(fpLog, "[time unavailable] ");
+    }
 
-	fflush(fpLog);
+    va_start(arg, fmt);
+    vfprintf(fpLog, fmt, arg);
+    va_end(arg);
+
+    fflush(fpLog);
 }
 
-
-///////////////////
-// Close the log file
+// Close the log file.
 void closeLog(void)
 {
-	if(fpLog)
-		fclose(fpLog);
-	fpLog = NULL;
+    if(fpLog)
+        fclose(fpLog);
+
+    fpLog = NULL;
 }

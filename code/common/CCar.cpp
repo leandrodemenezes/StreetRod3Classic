@@ -1954,7 +1954,7 @@ bool CCar::loadSaveGame(FILE *fp)
     // Parts
     //
     bool ok;
-    for(i=0; i<4; i++) {
+    for(int i=0; i<4; i++) {
         cTires[i] = readPart(fp, &ok);
         if(!ok) return false;
         if(cTires[i])
@@ -1964,14 +1964,14 @@ bool CCar::loadSaveGame(FILE *fp)
     cBlock = readPart(fp, &ok);
     if(!ok) return false;
 
-    for(i=0; i<2; i++) {
+    for(int i=0; i<2; i++) {
         cMufflers[i] = readPart(fp, &ok);
         if(!ok) return false;
         if(cMufflers[i])
             cMufflers[i]->setPartID(i);
     }
 
-    for(i=0; i<4; i++) {
+    for(int i=0; i<4; i++) {
         cShocks[i] = readPart(fp, &ok);
         if(!ok) return false;
         if(cShocks[i])

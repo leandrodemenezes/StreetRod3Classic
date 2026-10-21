@@ -90,7 +90,8 @@ entity_t *SpawnEntity(int nType, int nType2, CVec cPos, CVec cVel, float fAge)
 
     // Find a free entity
     entity_t *ent = psEntities;
-    for(int i=0; i<MAX_ENTITIES; i++, ent++) {
+    int i;
+    for(i=0; i<MAX_ENTITIES; i++, ent++) {
         if( !ent->bUsed )
             break;
     }
